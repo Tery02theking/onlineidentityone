@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Cinematic Energy Body Panel</title>
+
+<!-- p5.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+
+<style>
+    body {
+        margin: 0;
+        background: #000;
+        overflow-x: hidden;
+        font-family: Arial, sans-serif;
+		<img src="energybeing.webp" style="width:200px; border: 1px solid red;">
+
+    }
+
+    .panel-wrapper {
+        display: flex;
+        width: 100vw;
+        height: 100vh;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 0;
+        padding: 0;
+        margin: 0;
+    }
+
+    .panel {
+        flex: 1;
+        text-align: center;
+        margin: 0;
+        padding: 0;
+        position: relative;
+        animation: fadeIn 2s ease forwards;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(40px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .center-image {
+        width: 100%;
+        display: block;
+        margin: 0;
+        filter: drop-shadow(0 0 20px white);
+    }
+
+    .under-gif {
+        width: 100%;
+        margin-top: -10px;
+        filter: drop-shadow(0 0 25px white);
+    }
+
+    canvas {
+        width: 100% !important;
+        height: auto !important;
+        display: block;
+        filter: drop-shadow(0 0 25px white);
+    }
+</style>
+</head>
+
+<body>
+
+<div class="panel-wrapper">
+
+    <!-- Heart -->
+    <div class="panel">
+        <div id="heart-container"></div>
+    </div>
+
+    <!-- Center merged content -->
+    <div class="panel">
+        <img src="onewithuniverse.gif" class="center-gif">
+        <a href="../index.html"><img src="scanme.gif" class="under-gif"></a>
+    </div>
+
+    <!-- Lungs -->
+    <div class="panel">
+        <div id="lungs-container"></div>
+    </div>
+
+</div>
+
+<script>
+/* ---------------------------
+   UNIFIED SLOW PULSE
+--------------------------- */
+let globalPulse = 0;
+function pulseSync() {
+    globalPulse += 0.008; // slower increment = slower expansion
+    requestAnimationFrame(pulseSync);
+}
+pulseSync();
+</script>
+
+<script>
+/* ---------------------------
+   HEART SKETCH (LEFT)
+--------------------------- */
+new p5((p) => {
+
+    p.setup = function () {
+        let cnv = p.createCanvas(600, 800);
+        cnv.parent("heart-container");
+        p.noStroke();
+    };
+
+    p.draw = function () {
+        p.clear();
+
+        // Slower pulsing scale
+        let s = 1 + 0.1 * Math.sin(globalPulse * 3); // keeps expansion amplitude same but slower
+
+        p.translate(p.width / 2, p.height / 2 - 50);
+        p.scale(s);
+
+        drawHeart();
+    };
+
+    function drawHeart() {
+        // Base red heart
+        p.fill(180, 30, 40, 200);
+        p.noStroke();
+        p.beginShape();
+        p.vertex(0, -180);
+        p.bezierVertex(-120, -200, -200, -80, -140, -10);
+        p.bezierVertex(-200, 40, -120, 220, 0, 220);
+        p.bezierVertex(120, 220, 200, 40, 140, -10);
+        p.bezierVertex(200, -80, 120, -200, 0, -180);
+        p.endShape(p.CLOSE);
+
+        // White glow
+        p.stroke(255, 255, 255, 100);
+        p.strokeWeight(20);
+        p.noFill();
+        p.beginShape();
+        p.vertex(0, -180);
+        p.bezierVertex(-120, -200, -200, -80, -140, -10);
+        p.bezierVertex(-200, 40, -120, 220, 0, 220);
+        p.bezierVertex(120, 220, 200, 40, 140, -10);
+        p.bezierVertex(200, -80, 120, -200, 0, -180);
+        p.endShape(p.CLOSE);
+    }
+});
+</script>
+
+<script>
+/* ---------------------------
+   LUNGS SKETCH (RIGHT)
+--------------------------- */
+new p5((p) => {
+
+    p.setup = function () {
+        let cnv = p.createCanvas(600, 800);
+        cnv.parent("lungs-container");
+        p.angleMode(p.DEGREES);
+    };
+
+    p.draw = function () {
+        p.clear();
+
+        // slower breathing pulse
+        let breatheAmount = 1 + 0.15 * Math.sin(globalPulse * 3);
+
+        p.translate(p.width / 2, p.height / 2 - 80);
+        p.scale(breatheAmount);
+
+        drawLungs();
+    };
+
+    function drawLungs() {
+        p.noStroke();
+
+        // Left lung
+        p.fill(200, 80, 120, 120);
+        p.ellipse(-110, 0, 260, 420);
+
+        // Right lung
+        p.fill(220, 90, 140, 120);
+        p.ellipse(110, 0, 260, 420);
+
+        // Trachea
+        p.fill(180, 70, 110, 120);
+        p.rect(-30, -240, 60, 320, 30);
+
+        // White glow for bronchi
+        p.stroke(255, 255, 255, 100);
+        p.strokeWeight(20);
+        p.noFill();
+        p.bezier(0, -180, -60, -100, -150, -40, -130, 70);
+        p.bezier(0, -180, 60, -100, 150, -40, 130, 70);
+    }
+});
+</script>
+
+</body>
+</html>
