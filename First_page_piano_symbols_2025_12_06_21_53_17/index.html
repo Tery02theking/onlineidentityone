@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Three p5.js Sketches on One Page</title>
+  <link rel="stylesheet" type="text/css" href="style.css" />
+  
+  <!-- Load p5 once -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
+  <!-- If you need p5.sound in any sketch -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/addons/p5.sound.min.js"></script>
+  
+  <style>
+    body { margin: 0; padding: 20px; font-family: sans-serif; background: #f0f0f0; }
+    .sketch-container { 
+      display: inline-block; 
+      margin: 20px; 
+      text-align: center; 
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    h2 { margin: 10px 0; }
+  </style>
+</head>
+<body>
+
+  <h1>Three p5.js – Three Sketches on the Same Page</h1>
+
+  <!-- Container for each sketch -->
+  <div class="sketch-container" id="sketch1"></div>
+  <div class="sketch-container" id="sketch2"></div>
+  <div class="sketch-container" id="sketch3"></div>
+
+  <!-- Your three sketches (instance mode) -->
+  <script>
+    // Sketch 1
+    new p5(function(p) {
+      p.setup = function() {
+        let canvas = p.createCanvas(400, 300);
+        canvas.parent('sketch1');
+        p.background(100, 150, 255);
+      };
+
+      p.draw = function() {
+        p.fill(255, 100, 0);
+        p.noStroke();
+        p.circle(p.width/2 + p.sin(p.frameCount*0.05)*100, p.height/2, 80);
+      };
+    });
+
+    // Sketch 2  
+    new p5(function(p) {
+      let angle = 0;
+      p.setup = function() {
+        let canvas = p.createCanvas(400, 300, p.WEBGL);
+        canvas.parent('sketch2');
+      };
+
+      p.draw = function() {
+        p.background(20);
+        p.rotateY(angle);
+        p.rotateX(angle * 0.3);
+        p.noStroke();
+        p.fill(0, 200, 255);
+        p.box(150);
+        angle += 0.01;
+      };
+    });
+
+    // Sketch 3
+    new p5(function(p) {
+      p.setup = function() {
+        let canvas = p.createCanvas(400, 300);
+        canvas.parent('sketch3');
+        p.background(40);
+      };
+
+      p.draw = function() {
+        p.stroke(255);
+        p.strokeWeight(4);
+        p.noFill();
+        
+        let x = p.width/2 + p.cos(p.frameCount*0.02) * 120;
+        let y = p.height/2 + p.sin(p.frameCount*0.03) * 120;
+        p.line(p.width/2, p.height/2, x, y);
+      };
+    });
+  </script>
+
+</body>
+</html>
