@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Piano + Visualizer + Full-Width GIF</title>
+
+  <!-- p5.js + sound -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/addons/p5.sound.min.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      background: black;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-x: hidden;
+      font-family: sans-serif;
+    }
+
+    /* Piano + Visualizer containers */
+    #piano-wrapper,
+    #visualizer-wrapper {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      padding: 0;
+      margin: 0;
+    }
+
+    /* FULL-WIDTH GIF */
+    #bottom-gif {
+      width: 100vw;
+      margin: 0;
+      padding: 0;
+    }
+
+    #bottom-gif img {
+      width: 100vw;
+      height: auto;
+      display: block;
+      margin: 0;
+      padding: 0;
+    }
+
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOP: PIANO -->
+  <div id="piano-wrapper"></div>
+
+  <!-- MIDDLE: AUDIO VISUALIZER -->
+  <div id="visualizer-wrapper"></div>
+
+  <!-- BOTTOM: FULL-WIDTH GIF -->
+  <div id="bottom-gif"> <a href="../index.html"><img src="floatingpianokeys.gif" alt="piano keys animation"></a>
+  </div>
+
+<script>
+/* ---------------------------------------
+   TOP PIANO SKETCH
+---------------------------------------- */
+let pianoSketch = p => {
+
+  let rectX = 10;
+  let rectY = 0;
+  let rectWidth = 12;
+  let rectHeight = 120;
+
+  let circles = [];
+  let particles = [];
+
+  p.setup = () => {
+    let cnv = p.createCanvas(p.windowWidth, 120);
+    cnv.parent("piano-wrapper");
+    rectX = p.width / 2;
+  };
+
+  p.windowResized = () => {
+    p.resizeCanvas(p.windowWidth, 120);
+  };
+
+  p.draw = () => {
+    p.background(255);
+
+    // PARTICLES
+    for (let i = particles.length - 1; i >= 0; i--) {
+      let q = particles[i];
+      q.x += q.vx;
+      q.y += q.vy;
+      q.life--;
+
+      let alpha = p.map(q.life, 0, q.maxLife, 255, 0);
+      p.fill(p.red(q.col), p.green(q.col), p.blue(q.col), alpha);
+      p.noStroke();
+      p.ellipse(q.x, q.y, q.size);
+
+      if (q.life <= 0) particles.splice(i, 1);
+    }
+
+    // CIRCLES
+    for (let c of circles) {
+      p.fill(c.col);
+      p.noStroke();
+      p.ellipse(c.x, c.y, c.diameter);
+    }
+
+    // MOVING BLACK KEY
+    rectX += p.random(-8, 8);
+    rectX = p.constrain(rectX, 0, p.width - rectWidth);
+    p.fill(0);
+    p.rect(rectX, rectY, rectWidth, rectHeight);
+
+    // Piano stripes
+    p.fill(22);
+    let thickSpacing = 22;
+    for (let x = 0; x <= p.width; x += thickSpacing) {
+      p.rect(x, 0, 9, 80);
+    }
+
+    let thinSpacing = 15;
+    for (let x = 0; x <= p.width; x += thinSpacing) {
+      p.rect(x, 0, 0.75, 120);
+    }
+  };
+
+  p.mousePressed = () => {
+    for (let i = circles.length - 1; i >= 0; i--) {
+      let c = circles[i];
+      if (p.dist(p.mouseX, p.mouseY, c.x, c.y) < c.diameter / 2) {
+        explode(c.x, c.y, c.col);
+        circles.splice(i, 1);
+        return;
+      }
+    }
+
+    circles.push({
+      x: p.mouseX,
+      y: p.mouseY,
+      diameter: 15 + p.random(-3, 8),
+      col: p.color(p.random(255), p.random(255), p.random(255))
+    });
+  };
+
+  function explode(x, y, col) {
+    for (let i = 0; i < 30; i++) {
+      let angle = Math.random() * Math.PI * 2;
+      let speed = Math.random() * 6 + 2;
+      let lifeSpan = Math.floor(Math.random() * 20 + 20);
+
+      particles.push({
+        x,
+        y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        size: Math.random() * 8 + 4,
+        life: lifeSpan,
+        maxLife: lifeSpan,
+        col
+      });
+    }
+  }
+};
+
+new p5(pianoSketch);
+
+
+/* ---------------------------------------
+   MIDDLE AUDIO VISUALIZER (FIXED)
+---------------------------------------- */
+let visualSketch = p => {
+
+  let Penny, amp, vol;
+  let stage = "circles";
+
+  p.preload = () => {
+    Penny = p.loadSound("Penny.mp3");
+  };
+
+  p.setup = () => {
+    let cnv = p.createCanvas(p.windowWidth, 600);
+    cnv.parent("visualizer-wrapper");
+
+    p.colorMode(p.HSB, 360, 100, 100, 100);
+
+    // FIX: bind amplitude to this instance
+    amp = new p5.Amplitude(p);
+    amp.setInput(Penny);
+    amp.smooth(0.3);
+  };
+
+  p.draw = () => {
+    p.background(0, 0, 0, 20);
+
+    vol = amp.getLevel();
+
+    let size      = p.map(vol, 0, 0.5, 30, 220);
+    let bright    = p.map(vol, 0, 0.5, 40, 100);
+    let sat       = p.map(vol, 0, 0.5, 60, 100);
+
+    if (stage === "circles") drawCircles(size, bright, sat);
+    else drawGrid(size, bright);
+  };
+
+  function drawCircles(baseSize, brightness, saturation) {
+    const cols = 9;
+    const rows = 9;
+    const spacingX = p.width / (cols + 1);
+    const spacingY = p.height / (rows + 1);
+
+    for (let i = 0; i < cols; i++) {
+      for (let j = 0; j < rows; j++) {
+        let x = spacingX * (i + 1);
+        let y = spacingY * (j + 1);
+
+        let breathe = p.sin(p.frameCount * 0.02 + i * 0.5 + j * 0.5) * 30;
+        let hue = (p.frameCount * 0.3 + i * 25 + j * 15) % 360;
+
+        let distC = p.dist(x, y, p.width/2, p.height/2);
+        let sizeOffset = p.map(distC, 0, 300, 0, 60);
+
+        let pulseSize = baseSize + breathe + sizeOffset;
+
+        p.fill(hue, saturation, brightness, 90);
+        p.noStroke();
+        p.ellipse(x, y, pulseSize);
+      }
+    }
+  }
+
+  function drawGrid(baseSize, brightness) {
+    let spacing = p.map(vol, 0, 0.5, 40, 12);
+    p.strokeWeight(p.map(vol, 0, 0.5, 1, 7));
+    p.stroke((p.frameCount * 2) % 360, 80, brightness);
+
+    for (let x = 0; x <= p.width; x += spacing) {
+      for (let y = 0; y <= p.height; y += spacing) {
+        let d = p.dist(x, y, p.mouseX, p.mouseY);
+        let wave = p.sin(p.frameCount * 0.08 + d * 0.02) * vol * 150;
+
+        p.line(x - wave, y, x + wave, y);
+        p.line(x, y - wave, x, y + wave);
+      }
+    }
+  }
+
+  p.mousePressed = () => {
+    if (Penny.isPlaying()) Penny.pause();
+    else { Penny.play(); Penny.loop(); }
+  };
+
+  p.keyPressed = () => {
+    if (p.key === ' ') stage = stage === "circles" ? "grid" : "circles";
+  };
+
+  p.windowResized = () => {
+    p.resizeCanvas(p.windowWidth, 600);
+  };
+};
+
+new p5(visualSketch);
+</script>
+
+</body>
+</html>
