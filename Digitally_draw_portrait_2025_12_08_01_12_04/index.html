@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sharpie Portrait Sketch</title>
+  <style>
+    body {
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f0f0f0;
+      font-family: sans-serif;
+      overflow: hidden;
+    }
+
+    .container {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+      box-sizing: border-box;
+      padding: 10px;
+    }
+
+    .side-gif {
+      height: 100%;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+
+    #canvas-wrapper {
+      flex-grow: 1; /* canvas fills remaining space */
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #canvas-wrapper canvas {
+      display: block;
+      border: none;
+      max-width: 100%;
+      max-height: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div class="container"> <a href="../index.html"><img src="leftsidedrawing.gif" class="side-gif left-gif"></a>
+    <div id="canvas-wrapper"></div>
+    <img src="rightsidedrawing.gif" class="side-gif right-gif">
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+  <script>
+    const STROKE_DENSITY = 0.2;
+    const STROKE_MAX_LEN = 6;
+    const STROKE_MIN_LEN = 2;
+    const WIGGLE_AMT = 1.5;
+    const LINE_THICKNESS = 0.5;
+    const IMG_URL = "maleportrait.jpg";
+
+    let srcImg;
+    let pg;
+    let canvas;
+    let leftGif, rightGif;
+
+    function preload() {
+      srcImg = loadImage(IMG_URL);
+    }
+
+    function setup() {
+      leftGif = document.querySelector('.left-gif');
+      rightGif = document.querySelector('.right-gif');
+      resizeLayout();
+      drawSharpieImage();
+      noLoop();
+    }
+
+    function draw() {
+      let wrapper = document.getElementById('canvas-wrapper');
+      let ratio = min(wrapper.offsetWidth / pg.width, wrapper.offsetHeight / pg.height);
+      let drawWidth = pg.width * ratio;
+      let drawHeight = pg.height * ratio;
+      image(pg, (wrapper.offsetWidth - drawWidth)/2, (wrapper.offsetHeight - drawHeight)/2, drawWidth, drawHeight);
+    }
+
+    function drawSharpieImage() {
+      let wrapper = document.getElementById('canvas-wrapper');
+      let cw = wrapper.offsetWidth;
+      let ch = wrapper.offsetHeight;
+
+      pg = createGraphics(cw, ch);
+      pg.background(255);
+      pg.noFill();
+      pg.stroke(0);
+      pg.strokeWeight(LINE_THICKNESS);
+
+      let ratio = min(cw / srcImg.width, ch / srcImg.height);
+      let iw = srcImg.width * ratio;
+      let ih = srcImg.height * ratio;
+      srcImg.resize(iw, ih);
+
+      let offsetX = (cw - iw) / 2;
+      let offsetY = (ch - ih) / 2;
+
+      srcImg.loadPixels();
+      for (let y = 0; y < srcImg.height; y += 2) {
+        for (let x = 0; x < srcImg.width; x += 2) {
+          let i = (x + y * srcImg.width) * 4;
+          let brightness = (srcImg.pixels[i] + srcImg.pixels[i+1] + srcImg.pixels[i+2]) / 3;
+          let darkness = 1 - brightness / 255;
+          if (random() < darkness * STROKE_DENSITY) {
+            drawSharpieStroke(pg, x + offsetX, y + offsetY, darkness);
+          }
+        }
+      }
+    }
+
+    function drawSharpieStroke(g, cx, cy, darkness) {
+      let len = lerp(STROKE_MIN_LEN, STROKE_MAX_LEN, darkness) * random(0.8, 1.2);
+      let half = len / 2;
+      g.beginShape();
+      for (let t = -half; t <= half; t += 1) {
+        let px = cx + random(-WIGGLE_AMT, WIGGLE_AMT);
+        let py = cy + t + random(-WIGGLE_AMT, WIGGLE_AMT);
+        g.vertex(px, py);
+      }
+      g.endShape();
+    }
+
+    function windowResized() {
+      resizeLayout();
+      drawSharpieImage();
+      redraw();
+    }
+
+    function resizeLayout() {
+      const container = document.querySelector('.container');
+      const containerWidth = container.offsetWidth;
+      const containerHeight = container.offsetHeight;
+
+      // Set max width for left GIF
+      const maxLeftGifWidth = containerWidth * 0.3;
+      leftGif.style.width = `${maxLeftGifWidth}px`;
+
+      // Right GIF touches the canvas, so we set a fixed width proportionally
+      const maxRightGifWidth = containerWidth * 0.3;
+      rightGif.style.width = `${maxRightGifWidth}px`;
+
+      // Canvas width fills the remaining space
+      const canvasWidthFinal = containerWidth - leftGif.offsetWidth - rightGif.offsetWidth;
+      const canvasHeight = containerHeight;
+
+      if (!canvas) {
+        canvas = createCanvas(canvasWidthFinal, canvasHeight);
+        canvas.parent('canvas-wrapper');
+      } else {
+        resizeCanvas(canvasWidthFinal, canvasHeight);
+      }
+    }
+  </script>
+</body>
+</html>
