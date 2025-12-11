@@ -159,7 +159,12 @@
       }
       g.endShape();
     }
-
+     function mousePressed() {
+  redraw();
+    //pencil with mouse feature
+  textSize(20);
+  text("✏️",mouseX,mouseY);;
+}
     function windowResized() {
       resizeLayout();
       drawSharpieImage();
